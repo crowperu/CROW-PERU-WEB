@@ -25,6 +25,17 @@ def normalized(value):
     value = unicodedata.normalize("NFD", str(value or "").lower())
     return re.sub(r"[^a-z0-9]+", "-", "".join(c for c in value if unicodedata.category(c)!="Mn")).strip("-")
 
+HYGIENE_RETURN_LABEL = "CROW-SIN-CAMBIOS-HIGIENE"
+HYGIENE_CATEGORIES = frozenset({"arete", "aretes", "piercing", "piercings"})
+
+def return_policy_label(category):
+    """Only jewelry categories excluded from *voluntary exchanges* in Peru.
+
+    A valid Merchant Center exception must keep legally required remedies for
+    defective/non-conforming goods; the label is not a denial of statutory rights.
+    """
+    return HYGIENE_RETURN_LABEL if normalized(category) in HYGIENE_CATEGORIES else None
+
 def kind(category):
     key = normalized(category).replace("-", " ")
     if key in CLASS:
@@ -127,6 +138,9 @@ def main():
         if Decimal(0) < sale < base_price:
             g(item, "sale_price", f"{sale:.2f} PEN")
         g(item, "product_type", p.get("category") or "Accesorios")
+        policy_label = return_policy_label(p.get("category"))
+        if policy_label:
+            g(item, "return_policy_label", policy_label)
         if clean_text(p.get("color")):
             g(item, "color", clean_text(p["color"]))
         if clean_text(p.get("material")):

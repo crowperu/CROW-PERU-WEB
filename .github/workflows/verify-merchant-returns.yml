@@ -1,0 +1,31 @@
+name: QA Merchant Return Policy Labels
+
+on:
+  push:
+    branches:
+      - fix/crow-return-policy-hygiene-20261014
+    paths:
+      - "catalog/generate_merchant_feed.py"
+      - "catalog/test_return_policy_label.py"
+      - ".github/workflows/verify-merchant-returns.yml"
+  pull_request:
+    paths:
+      - "catalog/generate_merchant_feed.py"
+      - "catalog/test_return_policy_label.py"
+      - ".github/workflows/verify-merchant-returns.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate return exception categories, generated XML and unchanged prices
+        run: python3 -m unittest discover -s catalog -p 'test_*.py' -v
