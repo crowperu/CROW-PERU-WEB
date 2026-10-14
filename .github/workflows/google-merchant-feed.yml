@@ -2,6 +2,7 @@ name: CROW PE Google Merchant Feed
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - "catalog/generate_merchant_feed.py"
       - ".github/workflows/google-merchant-feed.yml"
