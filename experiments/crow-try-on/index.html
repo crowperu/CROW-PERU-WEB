@@ -17,6 +17,22 @@ document.querySelector('#camera').onclick=async()=>{stop();try{stream=await navi
 document.querySelector('#stop').onclick=stop;
 document.querySelector('#upload').onchange=e=>{const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;stop();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(f);photo.src=objectUrl;photo.style.display='block';video.style.display='none'};
 ['model','y','spacing','size'].forEach(id=>document.getElementById(id).addEventListener('input',render));
-document.querySelector('#save').onclick=()=>{const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1200;const ctx=canvas.getContext('2d');const source=photo.style.display==='block'?photo:video;if(source===video&&!stream)return alert('Activa la cámara o sube una selfie');const w=source.videoWidth||source.naturalWidth,h=source.videoHeight||source.naturalHeight;if(!w||!h)return;ctx.fillStyle='#eee';ctx.fillRect(0,0,900,1200);const scale=Math.min(900/w,1200/h),dw=w*scale,dh=h*scale;ctx.save();if(source===video){ctx.translate(900,0);ctx.scale(-1,1);ctx.drawImage(source,(900-dw)/2,(1200-dh)/2,dw,dh)}else ctx.drawImage(source,(900-dw)/2,(1200-dh)/2,dw,dh);ctx.restore();const nodes=earrings.querySelectorAll('svg');const stageRect=stage.getBoundingClientRect(),r=earrings.getBoundingClientRect();nodes.forEach(node=>{const box=node.getBoundingClientRect(),img=new Image(),data=new XMLSerializer().serializeToString(node);img.onload=()=>{ctx.drawImage(img,(box.left-stageRect.left)/stageRect.width*900,(box.top-stageRect.top)/stageRect.height*1200,box.width/stageRect.width*900,box.height/stageRect.height*1200);const a=document.createElement('a');a.download='crow-try-on-preview.png';a.href=canvas.toDataURL('image/png');a.click()};img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(data)})};
+document.querySelector('#save').onclick=async()=>{
+const source=photo.style.display==='block'?photo:video;
+if(source===video&&!stream)return alert('Activa la cámara o sube una selfie');
+const w=source.videoWidth||source.naturalWidth,h=source.videoHeight||source.naturalHeight;if(!w||!h)return alert('La imagen aún no está lista');
+const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1200;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#eee';ctx.fillRect(0,0,900,1200);
+const scale=Math.min(900/w,1200/h),dw=w*scale,dh=h*scale;
+ctx.save();if(source===video){ctx.translate(900,0);ctx.scale(-1,1);ctx.drawImage(source,(900-dw)/2,(1200-dh)/2,dw,dh)}
+else ctx.drawImage(source,(900-dw)/2,(1200-dh)/2,dw,dh);ctx.restore();
+const nodes=[...earrings.querySelectorAll('svg')],stageRect=stage.getBoundingClientRect();
+for(const node of nodes){
+const box=node.getBoundingClientRect(),img=new Image(),data=new XMLSerializer().serializeToString(node);
+await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(data)});
+ctx.drawImage(img,(box.left-stageRect.left)/stageRect.width*900,(box.top-stageRect.top)/stageRect.height*1200,box.width/stageRect.width*900,box.height/stageRect.height*1200)
+}
+canvas.toBlob(blob=>{if(!blob)return alert('No se pudo crear la imagen');const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='crow-try-on-preview.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)},'image/png');
+};
 window.addEventListener('pagehide',()=>{stop();if(objectUrl)URL.revokeObjectURL(objectUrl)});render();
 </script></body></html>
